@@ -1,0 +1,45 @@
+name: Build Windows Gem exe 
+on: workflow_dispatch
+  
+jobs:
+  build-windows-exe:
+    runs-on: windows-latest
+    
+    steps:
+      - uses: actions/checkout@v3
+      
+      - uses: subosito/flutter-action@v2
+        with:
+          channel: 'stable'
+          flutter-version: '3.24.2'
+          
+      - name: Install Inno Setup 6
+        # The "|| true" tells GitHub to keep going even if choco says it's already installed
+        run: choco install innosetup --yes || true
+          
+      - name: Clone project
+        run: git clone https://github.com/anandnet/Harmony-Music.git
+
+      - name: Update lang data
+        working-directory: ./Harmony-Music
+        run: dart localization/generator.dart
+
+      - name: Set update check flag to true
+        # I corrected the path here to match where the file actually needs to be
+        working-directory: ./Harmony-Music
+        run: echo "const updateCheckFlag = true;" > lib/utils/update_check_flag_file.dart
+        
+      - name: Build windows exe package
+        working-directory: ./Harmony-Music
+        run: |
+          flutter pub get
+          dart pub global activate flutter_distributor
+          # This ensures the distributor is available in the current path
+          $env:Path += ";$env:LocalAppData\Pub\Cache\bin"
+          flutter_distributor package --platform windows --targets exe
+          
+      - name: Upload Windows exe artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Harmony-Music-Windows
+          path: ./Harmony-Music/dist/
