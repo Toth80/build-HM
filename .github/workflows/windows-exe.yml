@@ -15,7 +15,7 @@ jobs:
           
       - name: Install Inno Setup 6
         run: |
-          choco install innosetup --version=6.2.2 --yes
+          choco install innosetup --yes
           
       - name: Clone project
         run: git clone https://github.com/anandnet/Harmony-Music.git
